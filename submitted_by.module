@@ -6,8 +6,6 @@
  *
  * Swap in our own replacement for theme_node_submitted(), allowing the
  * site admin to configure the string on a per-nodetype basis.
- *
- * @return void
  **/
 function submitted_by_theme_registry_alter(&$theme_registry) {
   if (!empty($theme_registry['form_element'])) {
@@ -15,6 +13,11 @@ function submitted_by_theme_registry_alter(&$theme_registry) {
   }
 }
 
+/**
+ * Implementation of hook_form_alter().
+ *
+ * Add the pattern field to the node edit form.
+ */
 function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
   $type = isset($form['identity']['type']) ? $form['identity']['type']['#default_value'] : '';
   $form['appearance'] = array(
@@ -62,9 +65,9 @@ function submitted_by_node_submitted($node) {
 }
 
 /**
- * Because the normal submission line offers a quick and easy link to the user's
- * account page, we'll provide a token for that. Token should probably have this
- * built in.
+ * Because the normal submission line offers a quick and easy link to the
+ * user's account page, we'll provide a token for that. Token should
+ * probably have this built in.
  */
 function submitted_by_token_values($type, $object = NULL, $options = array()) {
   $values = array();

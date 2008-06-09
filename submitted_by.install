@@ -1,7 +1,11 @@
 <?php
 // $Id$
 
+/**
+ * Implementation of hook_uninstall().
+ */
 function submitted_by_uninstall() {
+  // Remove any variables that we have set.
   foreach (node_get_types('names') as $type => $name) {
     variable_del('submitted_by_' . $type);
   }
