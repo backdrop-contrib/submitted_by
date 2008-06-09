@@ -1,0 +1,8 @@
+<?php
+// $Id$
+
+function submitted_by_uninstall() {
+  foreach (node_get_types('names') as $type => $name) {
+    variable_del('submitted_by_' . $type);
+  }
+}
