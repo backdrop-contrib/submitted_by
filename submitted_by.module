@@ -2,6 +2,12 @@
 // $Id$
 
 /**
+ * @file
+ * Take over the "Submitted by" theme function to allow different
+ * content types to have different strings.
+ */
+ 
+/**
  * An implementation of hook_theme_registry_alter()
  *
  * Swap in our own replacement for theme_node_submitted(), allowing the
@@ -10,6 +16,40 @@
 function submitted_by_theme_registry_alter(&$theme_registry) {
   if (!empty($theme_registry['form_element'])) {
     $theme_registry['node_submitted']['function'] = 'submitted_by_node_submitted';
+    $theme_registry['comment_submitted']['function'] = 'submitted_by_comment_submitted';
+  }
+}
+
+function submitted_by_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'node_type_form' && isset($form['comment'])) {
+    $form['comment']['comment']['#weight'] = -5;
+    $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : '';
+    $default = variable_get('submitted_by_comment_'. $type, NULL);
+    $form['comment']['appearance'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => $default ? FALSE : TRUE,
+      '#title' => t('"Submitted by" Appearance'),
+      );
+    $form['comment']['appearance']['#weight'] = -1;
+    $form['comment']['appearance']['submitted_by']['submitted_by_comment'] = array(
+      '#type' => 'textfield',
+      '#title' => t("'Submitted by...' text"),
+      '#default_value' => $default,
+      '#description' => t("When a comment is displayed, text in this box will be used to override the normal attribution and date-posted text."),
+      );
+    $form['comment']['appearance']['submitted_by']['help'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => t('Replacement tokens'),
+      '#description' => t("The following tokens can be used in the Submitted By... text. They will be replaced with the appropriate values."),
+      );
+
+    $form['comment']['appearance']['submitted_by']['help']['tokens'] = array(
+      '#value' => theme('token_help', 'node'),
+      );
+
   }
 }
 
@@ -19,7 +59,7 @@ function submitted_by_theme_registry_alter(&$theme_registry) {
  * Add the pattern field to the node edit form.
  */
 function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
-  $type = isset($form['identity']['type']) ? $form['identity']['type']['#default_value'] : '';
+  $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : '';
   $form['appearance'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -44,6 +84,25 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
   $form['appearance']['submitted_by']['help']['tokens'] = array(
     '#value' => theme('token_help', 'node'),
   );
+}
+
+/**
+ * Format the "Submitted by username on date/time" for each comment.
+ * varying the results by node type.
+ */
+function submitted_by_comment_submitted($node) {
+  $type = db_result(db_query(db_rewrite_sql("SELECT n.type FROM {node} n WHERE n.nid=%d"), $node->nid));
+  if ($submitted = variable_get('submitted_by_comment_' . $type, NULL)) {
+    return token_replace($submitted, 'node', $node);
+  }
+  else {
+    return t('Submitted by !username on @datetime',
+      array(
+        '!username' => theme('username', $node),
+        '@datetime' => format_date($node->created),
+      )
+    );
+  }
 }
 
 /**
