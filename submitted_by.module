@@ -20,6 +20,12 @@ function submitted_by_theme_registry_alter(&$theme_registry) {
   }
 }
 
+
+/**
+ * Implementation of hook_form_alter().
+ *
+ * Add the pattern field to the node edit form for comments.
+ */
 function submitted_by_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'node_type_form' && isset($form['comment'])) {
     $form['comment']['comment']['#weight'] = -5;
@@ -47,7 +53,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
       );
 
     $form['comment']['appearance']['submitted_by']['help']['tokens'] = array(
-      '#value' => theme('token_help', 'node'),
+      '#value' => theme('token_help', 'comment'),
       );
 
   }
@@ -90,16 +96,16 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
  * Format the "Submitted by username on date/time" for each comment.
  * varying the results by node type.
  */
-function submitted_by_comment_submitted($node) {
-  $type = db_result(db_query(db_rewrite_sql("SELECT n.type FROM {node} n WHERE n.nid=%d"), $node->nid));
+function submitted_by_comment_submitted($comment) {
+  $type = db_result(db_query(db_rewrite_sql("SELECT n.type FROM {node} n WHERE n.nid=%d"), $comment->nid));
   if ($submitted = variable_get('submitted_by_comment_' . $type, NULL)) {
-    return token_replace($submitted, 'node', $node);
+    return token_replace($submitted, 'comment', $comment);
   }
   else {
     return t('Submitted by !username on @datetime',
       array(
-        '!username' => theme('username', $node),
-        '@datetime' => format_date($node->created),
+        '!username' => theme('username', $comment),
+        '@datetime' => format_date($comment->created),
       )
     );
   }
