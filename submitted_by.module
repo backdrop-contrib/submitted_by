@@ -65,12 +65,13 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
  * Add the pattern field to the node edit form.
  */
 function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
-  $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : '';
+  $type = isset($form['#node_type']->type) ? $form['#node_type']->type : '';
+  $current_value = variable_get('submitted_by_'. $type, NULL);
   $form['appearance'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' => t('Appearance'),
+    '#collapsed' => !$current_value,
+    '#title' => t('"Submitted by" Appearance'),
   );
   $form['appearance']['submitted_by']['#weight'] = -1;
   $form['appearance']['submitted_by']['submitted_by'] = array(
