@@ -106,7 +106,7 @@ function submitted_by_comment_submitted($comment) {
     return t('Submitted by !username on @datetime',
       array(
         '!username' => theme('username', $comment),
-        '@datetime' => format_date($comment->created),
+        '@datetime' => format_date($comment->timestamp),
       )
     );
   }
