@@ -20,42 +20,112 @@ function submitted_by_theme_registry_alter(&$theme_registry) {
   }
 }
 
-
 /**
  * Implementation of hook_form_alter().
  *
  * Add the pattern field to the node edit form for comments.
  */
 function submitted_by_form_alter(&$form, $form_state, $form_id) {
-  if ($form_id == 'node_type_form' && isset($form['comment'])) {
-    $form['comment']['comment']['#weight'] = -5;
-    $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : '';
-    $default = variable_get('submitted_by_comment_'. $type, NULL);
-    $form['comment']['appearance'] = array(
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => $default ? FALSE : TRUE,
-      '#title' => t('"Submitted by" Appearance'),
+  switch ($form_id) {
+    case 'node_type_form':
+      if (isset($form['comment'])) {
+        $form['comment']['comment']['#weight'] = -5;
+        $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : '';
+        $default = variable_get('submitted_by_comment_'. $type, NULL);
+        $form['comment']['appearance'] = array(
+          '#type' => 'fieldset',
+          '#collapsible' => TRUE,
+          '#collapsed' => empty($default),
+          '#title' => t('"Submitted by" Appearance'),
+          );
+        $form['comment']['appearance']['#weight'] = -1;
+
+        $form['comment']['appearance']['submitted_by']['submitted_by_comment'] = array(
+          '#type' => 'textfield',
+          '#title' => t("'Submitted by...' text"),
+          '#default_value' => $default,
+          '#description' => t("When a comment is displayed, text in this box will be used to override the normal attribution and date-posted text."),
+          );
+
+        if ($def_default = variable_get('submitted_by_comment_default', NULL)) {
+          $form['comment']['appearance']['submitted_by']['submitted_by_comment']['#description'] .= ' '. t('The systm default value is "%deflt."', array('%deflt' => $def_default));
+        }
+
+        $form['comment']['appearance']['submitted_by']['help'] = array(
+          '#type' => 'fieldset',
+          '#collapsible' => TRUE,
+          '#collapsed' => TRUE,
+          '#title' => t('Replacement tokens'),
+          '#description' => t("The following tokens can be used in the Submitted By... text. They will be replaced with the appropriate values."),
+          );
+
+        $form['comment']['appearance']['submitted_by']['help']['tokens'] = array(
+          '#value' => theme('token_help', 'comment'),
+          );
+      }
+      break;
+
+    case 'node_configure':
+      // Admin > Content > Post settings.
+      // Would this be better in system_theme_settings? ['node_info'], system_theme_settings_submit.
+      $node_default = variable_get('submitted_by_default', NULL);
+      $form['appearance'] = array(
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => empty($node_default),
+        '#title' => t('"Submitted by" Appearance'),
       );
-    $form['comment']['appearance']['#weight'] = -1;
-    $form['comment']['appearance']['submitted_by']['submitted_by_comment'] = array(
-      '#type' => 'textfield',
-      '#title' => t("'Submitted by...' text"),
-      '#default_value' => $default,
-      '#description' => t("When a comment is displayed, text in this box will be used to override the normal attribution and date-posted text."),
+      $form['appearance']['submitted_by']['#weight'] = -1;
+      // Note: node module will add "_type" to the variable name.
+      $form['appearance']['submitted_by']['submitted_by_default'] = array(
+        '#type' => 'textfield',
+        '#title' => t("Node 'Submitted by...' text"),
+        '#default_value' => $node_default,
+        '#description' => t("When a node is displayed, text in this box will be used to override the normal attribution and date-posted text."),
       );
-    $form['comment']['appearance']['submitted_by']['help'] = array(
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#title' => t('Replacement tokens'),
-      '#description' => t("The following tokens can be used in the Submitted By... text. They will be replaced with the appropriate values."),
+      $form['appearance']['submitted_by']['help'] = array(
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#title' => t('Replacement tokens'),
+        '#description' => t("The following tokens can be used in the Submitted By... text. They will be replaced with the appropriate values."),
       );
 
-    $form['comment']['appearance']['submitted_by']['help']['tokens'] = array(
-      '#value' => theme('token_help', 'comment'),
+      $form['appearance']['submitted_by']['help']['tokens'] = array(
+        '#value' => theme('token_help', 'node'),
       );
 
+      if (module_exists('comment')) {
+        $com_default = variable_get('submitted_by_comment_default', NULL);
+        $form['comment']['appearance'] = array(
+          '#type' => 'fieldset',
+          '#collapsible' => TRUE,
+          '#collapsed' => empty($com_default),
+          '#title' => t('Comment "Submitted by" Appearance'),
+          '#weight' => -1,
+          );
+        $form['comment']['appearance']['submitted_by']['submitted_by_comment_default'] = array(
+          '#type' => 'textfield',
+          '#title' => t("'Submitted by...' text"),
+          '#default_value' => $com_default,
+          '#description' => t("When a comment is displayed, text in this box will be used to override the normal attribution and date-posted text."),
+          );
+        $form['comment']['appearance']['submitted_by']['help'] = array(
+          '#type' => 'fieldset',
+          '#collapsible' => TRUE,
+          '#collapsed' => TRUE,
+          '#title' => t('Replacement tokens'),
+          '#description' => t("The following tokens can be used in the Submitted By... text. They will be replaced with the appropriate values."),
+          );
+
+        $form['comment']['appearance']['submitted_by']['help']['tokens'] = array(
+          '#value' => theme('token_help', 'comment'),
+          );
+
+        $form['buttons']['#weight'] = 99;
+//     drupal_set_message(show_array($form));
+        break;
+    }
   }
 }
 
@@ -72,25 +142,32 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => !$current_value,
     '#title' => t('"Submitted by" Appearance'),
-  );
+    );
   $form['appearance']['submitted_by']['#weight'] = -1;
+
+  // Note: node module will add "_type" to the variable name.
   $form['appearance']['submitted_by']['submitted_by'] = array(
     '#type' => 'textfield',
     '#title' => t("'Submitted by...' text"),
     '#default_value' => variable_get('submitted_by_'. $type, NULL),
     '#description' => t("When a node is displayed, text in this box will be used to override the normal attribution and date-posted text."),
-  );
+    );
+
+  if ($def_default = variable_get('submitted_by_default', NULL)) {
+    $form['appearance']['submitted_by']['submitted_by']['#description'] .= ' '. t('The systm default value is "%deflt."', array('%deflt' => $def_default));
+  }
+
   $form['appearance']['submitted_by']['help'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#title' => t('Replacement tokens'),
     '#description' => t("The following tokens can be used in the Submitted By... text. They will be replaced with the appropriate values."),
-  );
+    );
 
   $form['appearance']['submitted_by']['help']['tokens'] = array(
     '#value' => theme('token_help', 'node'),
-  );
+    );
 }
 
 /**
@@ -99,7 +176,7 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
  */
 function submitted_by_comment_submitted($comment) {
   $type = db_result(db_query(db_rewrite_sql("SELECT n.type FROM {node} n WHERE n.nid=%d"), $comment->nid));
-  if ($submitted = variable_get('submitted_by_comment_' . $type, NULL)) {
+  if ($submitted = variable_get('submitted_by_comment_' . $type, variable_get('submitted_by_comment_default', NULL))) {
     return token_replace($submitted, 'comment', $comment);
   }
   else {
@@ -117,7 +194,7 @@ function submitted_by_comment_submitted($comment) {
  * varying the results by node type.
  */
 function submitted_by_node_submitted($node) {
-  if ($submitted = variable_get('submitted_by_' . $node->type, NULL)) {
+  if ($submitted = variable_get('submitted_by_' . $node->type, variable_get('submitted_by_default', NULL))) {
     return token_replace($submitted, 'node', $node);
   }
   else {
