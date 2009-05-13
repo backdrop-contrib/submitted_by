@@ -213,19 +213,90 @@ function submitted_by_node_submitted($node) {
  * probably have this built in.
  */
 function submitted_by_token_values($type, $object = NULL, $options = array()) {
-  $values = array();
+  $tokens = array();
   switch ($type) {
     case 'node':
       $node = $object;
-      $values['author-link'] = theme('username', $node);
+      $tokens['author-link'] = theme('username', $node);
+
+    // Conditional last edit tokens. See http://drupal.org/node/377726
+    $editor_uid = db_result(db_query("SELECT uid FROM {node_revisions} WHERE vid=%d", $object->vid));
+    $editor = user_load(array('uid' => $editor_uid));
+    $tokens['last-editor'] = theme('username', $editor);
+    
+    if ($object->changed > $object->created) {
+      $last_edit_date = $object->changed;
+      $last_edit_type = t('changed');
+    }
+    else {
+      $last_edit_date = $object->created;
+      $last_edit_type = t('created');
+    }
+
+    $tokens['last-edit-type'] = $last_edit_type;
+    $tokens += _submitted_by_token_date($last_edit_date, 'last-edit');
   }
-  return $values;
+  return $tokens;
 }
 
 function submitted_by_token_list($type = 'all') {
   $tokens = array();
-  if ($type == 'node' || $type == 'all') {
-    $tokens['node']['author-link'] = t('Link to author');
+  if ($type == 'node') {
+    $tokens['node']['author-link'] = t('Link to author.');
+    // Conditional last edit tokens. See http://drupal.org/node/377726
+    $tokens['node']['last-editor'] = t('The last user to edit the node.');
+    $tokens['node']['last-edit-type'] = t('The last edit type (created, changed) for the node.');
+    $tokens['node']['last-edit-small'] = t('Node last edit - small');
+    $tokens['node']['last-edit-medium'] = t('Node last edit - medium');
+    $tokens['node']['last-edit-large'] = t('Node last edit - large');
+    $tokens['node']['last-edit-since'] = t('Node last edit - interval');
+    $tokens['node']['last-edit-yyyy'] = t('Node last edit year (four digit)');
+    $tokens['node']['last-edit-yy'] = t('Node last edit year (two digit)');
+    $tokens['node']['last-edit-month'] = t('Node last edit month (full word)');
+    $tokens['node']['last-edit-mon'] = t('Node last edit month (abbreviated)');
+    $tokens['node']['last-edit-mm'] = t('Node last edit month (two digit, zero padded)');
+    $tokens['node']['last-edit-m'] = t('Node last edit month (one or two digit)');
+    $tokens['node']['last-edit-ww'] = t('Node last edit week (two digit)');
+    $tokens['node']['last-edit-date'] = t('Node last edit date (day of month)');
+    $tokens['node']['last-edit-day'] = t('Node last edit day (full word)');
+    $tokens['node']['last-edit-ddd'] = t('Node last edit day (abbreviation)');
+    $tokens['node']['last-edit-dd'] = t('Node last edit day (two digit, zero-padded)');
+    $tokens['node']['last-edit-d'] = t('Node last edit day (one or two digit)');
+    $tokens['node']['last-edit-hh'] = t('Node last edit hour (two digit, zero-padded)');
+    $tokens['node']['last-edit-ii'] = t('Node last edit minute (two digit, zero-padded)');
+    $tokens['node']['last-edit-ss'] = t('Node last edit second (two digit, zero-padded)');
   }
   return $tokens;
+}
+
+function _submitted_by_token_date($date, $prefix = NULL) {
+  if ($prefix) {
+    $prefix .= '-';
+  }
+  $values = array(
+    $prefix .'small'  => format_date($date, 'small'),
+    $prefix .'medium' => format_date($date, 'medium'),
+    $prefix .'large'  => format_date($date, 'large'),
+    $prefix .'since'  => $date ? format_interval(time() - $date) : t('Never'),
+    );
+  $date = (int)$date;
+  $values += array(
+    $prefix .'yyyy'  => date('Y', $date),
+    $prefix .'yy'    => date('y', $date),
+    $prefix .'month' => date('F', $date),
+    $prefix .'mon'   => date('M', $date),
+    $prefix .'mm'    => date('m', $date),
+    $prefix .'m'     => date('n', $date),
+    $prefix .'ww'    => date('W', $date),
+    $prefix .'date'  => date('N', $date),
+    $prefix .'day'   => date('l', $date),
+    $prefix .'ddd'   => date('D', $date),
+    $prefix .'dd'    => date('d', $date),
+    $prefix .'d'     => date('j', $date),
+    $prefix .'hh'    => date('h', $date),
+    $prefix .'ii'    => date('i', $date),
+    $prefix .'ss'    => date('d', $date),
+    );
+
+  return $values;
 }
