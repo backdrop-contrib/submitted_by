@@ -30,7 +30,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
     case 'node_type_form':
       if (isset($form['comment'])) {
         $form['comment']['comment']['#weight'] = -5;
-        $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : '';
+        $type = isset($form['identity']['type']) ? $form['identity']['type']['#default_value'] : '';
         $default = variable_get('submitted_by_comment_'. $type, NULL);
         $form['comment']['appearance'] = array(
           '#type' => 'fieldset',
@@ -48,7 +48,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
           );
 
         if ($def_default = variable_get('submitted_by_comment_default', NULL)) {
-          $form['comment']['appearance']['submitted_by']['submitted_by_comment']['#description'] .= ' '. t('The systm default value is "%deflt."', array('%deflt' => $def_default));
+          $form['comment']['appearance']['submitted_by']['submitted_by_comment']['#description'] .= ' '. t('The system default value is "%deflt."', array('%deflt' => $def_default));
         }
 
         $form['comment']['appearance']['submitted_by']['help'] = array(
@@ -154,7 +154,7 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
     );
 
   if ($def_default = variable_get('submitted_by_default', NULL)) {
-    $form['appearance']['submitted_by']['submitted_by']['#description'] .= ' '. t('The systm default value is "%deflt."', array('%deflt' => $def_default));
+    $form['appearance']['submitted_by']['submitted_by']['#description'] .= ' '. t('The system default value is "%deflt."', array('%deflt' => $def_default));
   }
 
   $form['appearance']['submitted_by']['help'] = array(
@@ -176,7 +176,13 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
  */
 function submitted_by_comment_submitted($comment) {
   $type = db_result(db_query(db_rewrite_sql("SELECT n.type FROM {node} n WHERE n.nid=%d"), $comment->nid));
-  if ($submitted = variable_get('submitted_by_comment_' . $type, variable_get('submitted_by_comment_default', NULL))) {
+  if(variable_get('submitted_by_comment_' . $type, NULL)) {
+    $submitted = variable_get('submitted_by_comment_' . $type, NULL);
+  }
+  else {
+    $submitted = variable_get('submitted_by_comment_default', NULL);
+  }
+  if ($submitted) {
     return token_replace($submitted, 'comment', $comment);
   }
   else {
@@ -194,7 +200,13 @@ function submitted_by_comment_submitted($comment) {
  * varying the results by node type.
  */
 function submitted_by_node_submitted($node) {
-  if ($submitted = variable_get('submitted_by_' . $node->type, variable_get('submitted_by_default', NULL))) {
+  if(variable_get('submitted_by_' . $node->type, NULL)) {
+    $submitted = variable_get('submitted_by_' . $node->type, NULL);
+  }
+  else {
+    $submitted = variable_get('submitted_by_default', NULL);
+  }
+  if ($submitted) {
     return token_replace($submitted, 'node', $node);
   }
   else {
@@ -227,13 +239,18 @@ function submitted_by_token_values($type, $object = NULL, $options = array()) {
     if ($object->changed > $object->created) {
       $last_edit_date = $object->changed;
       $last_edit_type = t('changed');
+      $tokens['created-updated'] = t('created !created, updated !updated',
+        array('!created' => format_date($object->created, 'small'), '!updated' => format_date($object->changed, 'small')));
     }
     else {
       $last_edit_date = $object->created;
       $last_edit_type = t('created');
+      $tokens['created-updated'] = t('created !created',
+        array('!created' => format_date($object->created, 'small')));
     }
 
     $tokens['last-edit-type'] = $last_edit_type;
+
     $tokens += _submitted_by_token_date($last_edit_date, 'last-edit');
   }
   return $tokens;
@@ -257,19 +274,24 @@ function submitted_by_token_list($type = 'all') {
     $tokens['node']['last-edit-mm'] = t('Node last edit month (two digit, zero padded)');
     $tokens['node']['last-edit-m'] = t('Node last edit month (one or two digit)');
     $tokens['node']['last-edit-ww'] = t('Node last edit week (two digit)');
-    $tokens['node']['last-edit-date'] = t('Node last edit date (day of month)');
+    // ISO-8601 numeric representation of the day of the week (added in PHP 5.1.0)
+    if (version_compare(PHP_VERSION, '5.1.0', '>')) {
+      $tokens['node']['last-edit-date'] = t('Node last edit date (day of week)');
+    }
     $tokens['node']['last-edit-day'] = t('Node last edit day (full word)');
     $tokens['node']['last-edit-ddd'] = t('Node last edit day (abbreviation)');
     $tokens['node']['last-edit-dd'] = t('Node last edit day (two digit, zero-padded)');
     $tokens['node']['last-edit-d'] = t('Node last edit day (one or two digit)');
-    $tokens['node']['last-edit-hh'] = t('Node last edit hour (two digit, zero-padded)');
+    $tokens['node']['last-edit-hh'] = t('Node last edit hour in 12-hour format(two digit, zero-padded)');
     $tokens['node']['last-edit-ii'] = t('Node last edit minute (two digit, zero-padded)');
     $tokens['node']['last-edit-ss'] = t('Node last edit second (two digit, zero-padded)');
+    $tokens['node']['created-updated'] = t('Node created and updated dates (system small date)');
   }
   return $tokens;
 }
 
 function _submitted_by_token_date($date, $prefix = NULL) {
+  $date = (int)$date;
   if ($prefix) {
     $prefix .= '-';
   }
@@ -278,24 +300,21 @@ function _submitted_by_token_date($date, $prefix = NULL) {
     $prefix .'medium' => format_date($date, 'medium'),
     $prefix .'large'  => format_date($date, 'large'),
     $prefix .'since'  => $date ? format_interval(time() - $date) : t('Never'),
-    );
-  $date = (int)$date;
-  $values += array(
     $prefix .'yyyy'  => date('Y', $date),
     $prefix .'yy'    => date('y', $date),
-    $prefix .'month' => date('F', $date),
-    $prefix .'mon'   => date('M', $date),
+    $prefix .'month' => format_date($date, 'custom', 'F'),
+    $prefix .'mon'   => format_date($date, 'custom', 'M'),
     $prefix .'mm'    => date('m', $date),
     $prefix .'m'     => date('n', $date),
     $prefix .'ww'    => date('W', $date),
     $prefix .'date'  => date('N', $date),
-    $prefix .'day'   => date('l', $date),
-    $prefix .'ddd'   => date('D', $date),
+    $prefix .'day'   => format_date($date, 'custom', 'l'),
+    $prefix .'ddd'   => format_date($date, 'custom', 'D'),
     $prefix .'dd'    => date('d', $date),
     $prefix .'d'     => date('j', $date),
     $prefix .'hh'    => date('h', $date),
     $prefix .'ii'    => date('i', $date),
-    $prefix .'ss'    => date('d', $date),
+    $prefix .'ss'    => date('s', $date),
     );
 
   return $values;
