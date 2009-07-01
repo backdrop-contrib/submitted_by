@@ -256,6 +256,7 @@ function submitted_by_token_values($type, $object = NULL, $options = array()) {
 
     case 'comment':
       $tokens['comment-since'] = $object->timestamp ? format_interval(time() - $object->timestamp) : t('Never');
+      $tokens['author-link'] = theme('username', $object);
       break;
 
   }
@@ -296,6 +297,7 @@ function submitted_by_token_list($type = 'all') {
   else {
     if ($type == 'comment') {
       $tokens['comment']['comment-since'] = t('Comment create date - interval');
+      $tokens['comment']['author-link'] = t('Link to author.');
     }
   }
   return $tokens;
