@@ -30,7 +30,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
     case 'node_type_form':
       if (isset($form['comment'])) {
         $form['comment']['comment']['#weight'] = -5;
-        $type = isset($form['identity']['type']) ? $form['identity']['type']['#default_value'] : '';
+        $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : 'default';
         $default = variable_get('submitted_by_comment_'. $type, NULL);
         $form['comment']['appearance'] = array(
           '#type' => 'fieldset',
@@ -231,27 +231,33 @@ function submitted_by_token_values($type, $object = NULL, $options = array()) {
       $node = $object;
       $tokens['author-link'] = theme('username', $node);
 
-    // Conditional last edit tokens. See http://drupal.org/node/377726
-    $editor_uid = db_result(db_query("SELECT uid FROM {node_revisions} WHERE vid=%d", $object->vid));
-    $editor = user_load(array('uid' => $editor_uid));
-    $tokens['last-editor'] = theme('username', $editor);
+      // Conditional last edit tokens. See http://drupal.org/node/377726
+      $editor_uid = db_result(db_query("SELECT uid FROM {node_revisions} WHERE vid=%d", $object->vid));
+      $editor = user_load(array('uid' => $editor_uid));
+      $tokens['last-editor'] = theme('username', $editor);
     
-    if ($object->changed > $object->created) {
-      $last_edit_date = $object->changed;
-      $last_edit_type = t('changed');
-      $tokens['created-updated'] = t('created !created, updated !updated',
-        array('!created' => format_date($object->created, 'small'), '!updated' => format_date($object->changed, 'small')));
-    }
-    else {
-      $last_edit_date = $object->created;
-      $last_edit_type = t('created');
-      $tokens['created-updated'] = t('created !created',
-        array('!created' => format_date($object->created, 'small')));
-    }
+      if ($object->changed > $object->created) {
+        $last_edit_date = $object->changed;
+        $last_edit_type = t('changed');
+        $tokens['created-updated'] = t('created !created, updated !updated',
+          array('!created' => format_date($object->created, 'small'), '!updated' => format_date($object->changed, 'small')));
+      }
+      else {
+        $last_edit_date = $object->created;
+        $last_edit_type = t('created');
+        $tokens['created-updated'] = t('created !created',
+          array('!created' => format_date($object->created, 'small')));
+      }
 
-    $tokens['last-edit-type'] = $last_edit_type;
+      $tokens['last-edit-type'] = $last_edit_type;
 
-    $tokens += _submitted_by_token_date($last_edit_date, 'last-edit');
+      $tokens += _submitted_by_token_date($last_edit_date, 'last-edit');
+      break;
+
+    case 'comment':
+      $tokens['comment-since'] = $object->timestamp ? format_interval(time() - $object->timestamp) : t('Never');
+      break;
+
   }
   return $tokens;
 }
@@ -286,6 +292,11 @@ function submitted_by_token_list($type = 'all') {
     $tokens['node']['last-edit-ii'] = t('Node last edit minute (two digit, zero-padded)');
     $tokens['node']['last-edit-ss'] = t('Node last edit second (two digit, zero-padded)');
     $tokens['node']['created-updated'] = t('Node created and updated dates (system small date)');
+  }
+  else {
+    if ($type == 'comment') {
+      $tokens['comment']['comment-since'] = t('Comment create date - interval');
+    }
   }
   return $tokens;
 }
