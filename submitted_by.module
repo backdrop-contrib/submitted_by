@@ -230,6 +230,7 @@ function submitted_by_token_values($type, $object = NULL, $options = array()) {
     case 'node':
       $node = $object;
       $tokens['author-link'] = theme('username', $node);
+      $tokens['created-since'] = format_interval(time() - $node->created);
 
       // Conditional last edit tokens. See http://drupal.org/node/377726
       $editor_uid = db_result(db_query("SELECT uid FROM {node_revisions} WHERE vid=%d", $object->vid));
@@ -267,6 +268,7 @@ function submitted_by_token_list($type = 'all') {
   $tokens = array();
   if ($type == 'node') {
     $tokens['node']['author-link'] = t('Link to author.');
+    $tokens['node']['created-since'] = t('Node created date - interval.');
     // Conditional last edit tokens. See http://drupal.org/node/377726
     $tokens['node']['last-editor'] = t('The last user to edit the node.');
     $tokens['node']['last-edit-type'] = t('The last edit type (created, changed) for the node.');
