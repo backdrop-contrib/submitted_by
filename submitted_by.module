@@ -42,6 +42,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
 
         $form['comment']['appearance']['submitted_by']['submitted_by_comment'] = array(
           '#type' => 'textfield',
+          '#maxlength' => 255,
           '#title' => t("'Submitted by...' text"),
           '#default_value' => $default,
           '#description' => t("When a comment is displayed, text in this box will be used to override the normal attribution and date-posted text."),
@@ -79,21 +80,22 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
       // Note: node module will add "_type" to the variable name.
       $form['appearance']['submitted_by']['submitted_by_default'] = array(
         '#type' => 'textfield',
+        '#maxlength' => 255,
         '#title' => t("Node 'Submitted by...' text"),
         '#default_value' => $node_default,
         '#description' => t("When a node is displayed, text in this box will be used to override the normal attribution and date-posted text."),
-      );
+        );
       $form['appearance']['submitted_by']['help'] = array(
         '#type' => 'fieldset',
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
         '#title' => t('Replacement tokens'),
         '#description' => t("The following tokens can be used in the Submitted By... text. They will be replaced with the appropriate values."),
-      );
+        );
 
       $form['appearance']['submitted_by']['help']['tokens'] = array(
         '#value' => theme('token_help', 'node'),
-      );
+        );
 
       if (module_exists('comment')) {
         $com_default = variable_get('submitted_by_comment_default', NULL);
@@ -106,6 +108,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
           );
         $form['comment']['appearance']['submitted_by']['submitted_by_comment_default'] = array(
           '#type' => 'textfield',
+          '#maxlength' => 255,
           '#title' => t("'Submitted by...' text"),
           '#default_value' => $com_default,
           '#description' => t("When a comment is displayed, text in this box will be used to override the normal attribution and date-posted text."),
@@ -148,6 +151,7 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
   // Note: node module will add "_type" to the variable name.
   $form['appearance']['submitted_by']['submitted_by'] = array(
     '#type' => 'textfield',
+    '#maxlength' => 255,
     '#title' => t("'Submitted by...' text"),
     '#default_value' => variable_get('submitted_by_'. $type, NULL),
     '#description' => t("When a node is displayed, text in this box will be used to override the normal attribution and date-posted text."),
