@@ -30,7 +30,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
     case 'node_type_form':
       if (isset($form['comment'])) {
         $form['comment']['comment']['#weight'] = -5;
-        $type = isset($form['identity']['type']) ? $form['identity']['type']['#value'] : 'default';
+        $type = isset($form['#node_type']->type) ? $form['#node_type']->type : 'default';
         $default = variable_get('submitted_by_comment_'. $type, NULL);
         $form['comment']['appearance'] = array(
           '#type' => 'fieldset',
@@ -133,7 +133,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implementation of hook_form_FORM_ID_alter().
  *
  * Add the pattern field to the node edit form.
  */
