@@ -2,4 +2,6 @@
 name = Submitted By
 description = Customize the <em>Submitted by username on date</em> text on a per-nodetype basis.
 dependencies[] = token
-core = 6.x
+core = 7.x
+files[] = submitted_by.module
+files[] = submitted_by.install

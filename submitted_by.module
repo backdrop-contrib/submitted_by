@@ -139,7 +139,7 @@ function submitted_by_form_alter(&$form, $form_state, $form_id) {
  */
 function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
   $type = isset($form['#node_type']->type) ? $form['#node_type']->type : '';
-  $current_value = variable_get('submitted_by_'. $type, NULL);
+  $current_value = variable_get('submitted_by_' . $type, NULL);
   $form['appearance'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -153,7 +153,7 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
     '#type' => 'textfield',
     '#maxlength' => 255,
     '#title' => t("'Submitted by...' text"),
-    '#default_value' => variable_get('submitted_by_'. $type, NULL),
+    '#default_value' => variable_get('submitted_by_' . $type, NULL),
     '#description' => t("When a node is displayed, text in this box will be used to override the normal attribution and date-posted text."),
     );
 
