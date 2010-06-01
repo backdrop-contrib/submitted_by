@@ -187,7 +187,7 @@ function submitted_by_comment_submitted($comment) {
     $submitted = variable_get('submitted_by_comment_default', NULL);
   }
   if ($submitted) {
-    return filter_xss_admin(token_replace($submitted, 'comment', $comment));
+    return filter_xss_admin(token_replace(t($submitted), 'comment', $comment));
   }
   else {
     return t('Submitted by !username on @datetime',
