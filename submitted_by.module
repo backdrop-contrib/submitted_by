@@ -287,10 +287,7 @@ function submitted_by_token_list($type = 'all') {
     $tokens['node']['last-edit-mm'] = t('Node last edit month (two digit, zero padded)');
     $tokens['node']['last-edit-m'] = t('Node last edit month (one or two digit)');
     $tokens['node']['last-edit-ww'] = t('Node last edit week (two digit)');
-    // ISO-8601 numeric representation of the day of the week (added in PHP 5.1.0)
-    if (version_compare(PHP_VERSION, '5.1.0', '>')) {
-      $tokens['node']['last-edit-date'] = t('Node last edit date (day of week)');
-    }
+    $tokens['node']['last-edit-date'] = t('Node last edit date (day of week)');
     $tokens['node']['last-edit-day'] = t('Node last edit day (full word)');
     $tokens['node']['last-edit-ddd'] = t('Node last edit day (abbreviation)');
     $tokens['node']['last-edit-dd'] = t('Node last edit day (two digit, zero-padded)');
@@ -315,25 +312,25 @@ function _submitted_by_token_date($date, $prefix = NULL) {
     $prefix .= '-';
   }
   $values = array(
-    $prefix .'small'  => format_date($date, 'small'),
-    $prefix .'medium' => format_date($date, 'medium'),
-    $prefix .'large'  => format_date($date, 'large'),
+    $prefix .'small'  =>   format_date($date, 'small', '', $tz),
+    $prefix .'medium' =>   format_date($date, 'medium', '', $tz),
+    $prefix .'large'  =>   format_date($date, 'large', '', $tz),
     $prefix .'since'  => $date ? format_interval(time() - $date) : t('Never'),
-    $prefix .'yyyy'  => date('Y', $date),
-    $prefix .'yy'    => date('y', $date),
-    $prefix .'month' => t(format_date($date, 'custom', 'F')),
-    $prefix .'mon'   => t(format_date($date, 'custom', 'M')),
-    $prefix .'mm'    => date('m', $date),
-    $prefix .'m'     => date('n', $date),
-    $prefix .'ww'    => date('W', $date),
-    $prefix .'date'  => date('N', $date),
-    $prefix .'day'   => t(format_date($date, 'custom', 'l')),
-    $prefix .'ddd'   => t(format_date($date, 'custom', 'D')),
-    $prefix .'dd'    => date('d', $date),
-    $prefix .'d'     => date('j', $date),
-    $prefix .'hh'    => date('h', $date),
-    $prefix .'ii'    => date('i', $date),
-    $prefix .'ss'    => date('s', $date),
+    $prefix .'yyyy'   =>   format_date($date, 'custom', 'Y', $tz),
+    $prefix .'yy'     =>   format_date($date, 'custom', 'y', $tz),
+    $prefix .'month'  => t(format_date($date, 'custom', 'F', $tz)),
+    $prefix .'mon'    => t(format_date($date, 'custom', 'M', $tz)),
+    $prefix .'mm'     =>   format_date($date, 'custom', 'm', $tz),
+    $prefix .'m'      =>   format_date($date, 'custom', 'n', $tz),
+    $prefix .'ww'     =>   format_date($date, 'custom', 'W', $tz),
+    $prefix .'date'   =>   format_date($date, 'custom', 'N', $tz),
+    $prefix .'day'    => t(format_date($date, 'custom', 'l', $tz)),
+    $prefix .'ddd'    => t(format_date($date, 'custom', 'D', $tz)),
+    $prefix .'dd'     =>   format_date($date, 'custom', 'd', $tz),
+    $prefix .'d'      =>   format_date($date, 'custom', 'j', $tz),
+    $prefix .'hh'     =>   format_date($date, 'custom', 'h', $tz),
+    $prefix .'ii'     =>   format_date($date, 'custom', 'i', $tz),
+    $prefix .'ss'     =>   format_date($date, 'custom', 's', $tz),
     );
 
   return $values;
