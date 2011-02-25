@@ -1,4 +1,3 @@
-# $Id$
 #
 # Norwegian Bokmål translation of Drupal (general)
 # Copyright 2008 Christian Lomsdalen <christian@vindstille.net>

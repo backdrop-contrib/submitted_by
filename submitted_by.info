@@ -1,4 +1,3 @@
-; $Id$
 name = Submitted By
 description = Customize the <em>Submitted by username on date</em> text on a per-nodetype basis.
 dependencies[] = token
