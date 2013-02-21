@@ -140,11 +140,11 @@ function submitted_by_field_extra_fields() {
 function submitted_by_node_view($node, $view_mode, $langcode) {
   $fields = field_extra_fields_get_display('node', $node->type, $view_mode);
   if (isset($fields['submitted_by']['visible']) && $fields['submitted_by']['visible']) {
-    $node->content['submitted'] =
+    $node->content['submitted_by'] =
       array('#markup' => '<span class="submitted-by">' . submitted_by_do_replace($node, $view_mode) . '</span>');
   }
   else {
-    $node->content['submitted'] = array(array());
+    $node->content['submitted_by'] = array(array());
   }
 
   return;
