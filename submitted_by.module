@@ -174,7 +174,13 @@ function submitted_by_do_replace($node, $view_mode = '') {
  */
 function submitted_by_process_node(&$variables) {
   $node = $variables['node'];
+  $view_mode = $variables['view_mode'];
   $variables['submitted'] = submitted_by_do_replace($node, $variables['view_mode']);
+
+  $fields = field_extra_fields_get_display('node', $node->type, $view_mode);
+  if (isset($fields['submitted_by']['visible']) && $fields['submitted_by']['visible']) {
+    $variables['display_submitted'] = FALSE;
+  }
 
   // Override the regular submitted variable.
   if (isset($variables['content']['submitted_by'])) {
@@ -196,6 +202,6 @@ function submitted_by_process_comment(&$variables) {
   $submitted_by = variable_get('submitted_by_comment_' . $variables['node']->type, NULL);
   if ($submitted_by) {
     // @TODO: check this out.
-    $variables['submitted'] = token_replace($submitted_by, array('comment' => $variables['comment'], 'node' => $variables['node']));
+    $variables['submitted_by'] = token_replace($submitted_by, array('comment' => $variables['comment'], 'node' => $variables['node']));
   }
 }
