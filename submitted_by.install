@@ -12,46 +12,6 @@ function submitted_by_uninstall() {
   // Remove any variables that we have set.
   foreach (node_type_get_names() as $type => $name) {
     variable_del('submitted_by_' . $type);
-    variable_del('submitted_by_comment_' . $type);
+    variable_del('submitted_by_comment_node_' . $type);
   }
-}
-
-/**
- * Convert settings for view modes.
- */
-function submitted_by_update_7000(&$sandbox) {
-  // Get stuff from entity system.
-  $entity_info = entity_get_info('node');
-  $view_modes = array_keys($entity_info['view modes']);
-
-  // Get all node type names.
-  $types = node_type_get_names();
-
-  // Progress info.
-  $sandbox['max'] = count($types);
-  $sandbox['progress'] = 0;
-
-  // Go through each content type.
-  foreach ($types as $type => $name) {
-    $strings = array();
-    $var = "submitted_by_$type";
-    $current = variable_get($var, NULL);
-
-    // Just in case we didn't finish last time.
-    if (is_string($current)) {
-      // Build a new string array.
-      $strings = array_fill_keys($view_modes, $current);
-
-      // Save the array.
-      variable_set($var, $strings);
-    }
-
-    // Track our progress.
-    $sandbox['progress']++;
-  }
-
-  // Indicate that we're done.
-  $sandbox['#finished'] = 1;
-
-  return t('The Submitted By module is now ready for View modes.');
 }
