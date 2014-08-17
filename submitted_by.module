@@ -142,17 +142,19 @@ function submitted_by_field_extra_fields() {
  */
 function submitted_by_do_replace($entity, $view_mode = '', $entity_type = 'node') {
   $output = NULL;
+  // Note that we do suppress un-replaced tokens.
+  $options = array('clear' => TRUE);
   if ($entity_type == 'node') {
     $submitted_by = variable_get('submitted_by_' . $entity->type, array());
       if ($submitted_by && !empty($submitted_by[$view_mode])) {
       // Translate the string, then get node tokens.
       // Note that we do not suppress un-replaced tokens.
-      $output = token_replace(t($submitted_by[$view_mode]), array('node' => $entity));
+      $output = token_replace(t($submitted_by[$view_mode]), array('node' => $entity), $options);
     }
   }
   else {
     $submitted_by = variable_get('submitted_by_' . $entity->node_type, array());
-    $output = token_replace(t($submitted_by), array('comment' => $entity));
+    $output = token_replace(t($submitted_by), array('comment' => $entity), $options);
   }
   return $output;
 }
