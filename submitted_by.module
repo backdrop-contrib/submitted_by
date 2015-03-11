@@ -11,13 +11,7 @@
  */
 function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
   $type = isset($form['#node_type']->type) ? $form['#node_type']->type : '';
-  $enabled = variable_get('node_submitted_' . $type, TRUE);
   $current_value = variable_get('submitted_by_' . $type, array());
-  // Just in case the update hasn't run yet.
-  if (!is_array($current_value)) {
-    $current_value = array('full' => $current_value);
-  }
-
   if (isset($form['type'])) {
     $form['display']['submitted_by'] = array(
       '#type' => 'container',
@@ -42,7 +36,7 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
         '#type' => 'textfield',
         '#maxlength' => 255,
         '#title' => t("Byline text - @mode view mode", array('@mode' => $info['label'])),
-        '#default_value' => $enabled ? (isset($current_value[$mode]) ? $current_value[$mode] : 'Submitted by [node:author] on [node:created]') : NULL,
+        '#default_value' => isset($current_value[$mode]) ? $current_value[$mode]: '',
         '#description' => t('When a node is displayed in the "@mode" view mode, the text in this box
           will be used to override the normal byline attribution and date-posted text.
           Default is "Submitted by [node:author] on [node:created]"', array('@mode' => $info['label'])),
