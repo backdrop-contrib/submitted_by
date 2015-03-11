@@ -5,6 +5,9 @@
  * content types to have different strings.
  */
 
+define('SUBMITTED_NODE_TEXT', 'Submitted by [node:author] on [node:created]');
+define('SUBMITTED_COMMENT_NODE_TEXT', 'Submitted by [comment:author] on [comment:created]');
+
 /**
  * Implements hook_form_FORM_ID_alter().
  * Add the pattern field to the node edit form.
@@ -21,7 +24,6 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
         ),
       ),
     );
-
     // Get info about view_modes.
     $entity_info = entity_get_info('node');
 
@@ -29,17 +31,17 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
       '#type' => 'value',
       '#value' => $entity_info['view modes'],
       );
-
     foreach ($entity_info['view modes'] as $mode => $info) {
       // Note: node module will add "_type" to the variable name.
       $form['display']['submitted_by']["submitted_by_$mode"] = array(
         '#type' => 'textfield',
         '#maxlength' => 255,
         '#title' => t("Byline text - @mode view mode", array('@mode' => $info['label'])),
-        '#default_value' => isset($current_value[$mode]) ? $current_value[$mode]: '',
+        '#default_value' => !empty($current_value[$mode]) ? $current_value[$mode]: SUBMITTED_NODE_TEXT,
         '#description' => t('When a node is displayed in the "@mode" view mode, the text in this box
           will be used to override the normal byline attribution and date-posted text.
-          Default is "Submitted by [node:author] on [node:created]"', array('@mode' => $info['label'])),
+          Default is "@default"', array('@mode' => $info['label'],
+           '@default' => SUBMITTED_NODE_TEXT)),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('node'),
         );
@@ -58,8 +60,8 @@ function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
         '#type' => 'textfield',
         '#maxlength' => 255,
         '#title' => t("Byline text"),
-        '#default_value' => variable_get('submitted_by_comment_node_' . $type, NULL),
-        '#description' => t("When a comment is displayed, text in this box will be used to override the normal byline attribution and date-posted text. Default is \"Submitted by [comment:author] on [comment:created]\""),
+        '#default_value' => variable_get('submitted_by_comment_node_' . $type, SUBMITTED_COMMENT_NODE_TEXT),
+        '#description' => t('When a comment is displayed, text in this box will be used to override the normal byline attribution and date-posted text. Default is "@default"', array('@default' => SUBMITTED_COMMENT_NODE_TEXT)),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('comment'),
         );
@@ -230,4 +232,14 @@ function submitted_by_process_comment(&$variables) {
   else {
     $variables['submitted'] = submitted_by_do_replace($comment, '', 'comment');
   }
+}
+
+/**
+ * Implements hook_node_type_delete().
+ *
+ * Delete submitted_by variable when content type is deleted.
+ */
+function submitted_by_node_type_delete($info) {
+  variable_del('submitted_by_' . $info->type);
+  variable_del('submitted_by_comment_node_' . $info->type);
 }
