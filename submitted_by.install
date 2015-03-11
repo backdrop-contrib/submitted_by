@@ -25,13 +25,13 @@ function submitted_by_install() {
   // Get info about view_modes.
   $entity_info = entity_get_info('node');
   foreach ($entity_info['view modes'] as $mode => $info) {
-    $strings[$mode] = SUBMITTED_NODE_TEXT;
+    $strings[$mode] = SUBMITTED_BY_NODE_TEXT;
   }
 
   // Save the node type and comment settings.
   foreach ($node_types as $node_type) {
     variable_set('submitted_by_' . $node_type->type, $strings);
-    variable_set('submitted_by_comment_node_' . $node_type->type, SUBMITTED_COMMENT_NODE_TEXT);
+    variable_set('submitted_by_comment_node_' . $node_type->type, SUBMITTED_BY_COMMENT_NODE_TEXT);
   }
 }
 
@@ -45,7 +45,7 @@ function submitted_by_update_7001() {
   // Get info about view_modes.
   $entity_info = entity_get_info('node');
   foreach ($entity_info['view modes'] as $mode => $info) {
-    $strings[$mode] = 'Submitted by [node:author] on [node:created]';
+    $strings[$mode] = SUBMITTED_BY_NODE_TEXT;
   }
 
   // Save the node type and comment settings.
@@ -55,7 +55,7 @@ function submitted_by_update_7001() {
       variable_set('submitted_by_' . $node_type->type, $strings);
     }
     if (variable_get('submitted_by_comment_node_' . $node_type->type, NULL) == NULL) {
-      variable_set('submitted_by_comment_node_' . $node_type->type, 'Submitted by [comment:author] on [comment:created]');
+      variable_set('submitted_by_comment_node_' . $node_type->type, SUBMITTED_BY_COMMENT_NODE_TEXT);
     }
   }
 }
