@@ -1,105 +1,100 @@
 <?php
-
 /**
  * @file
- * Take over the "Submitted by" theme function.
- *
- * To allow different content types to have different strings.
+ * Take over the "Submitted By" theme function to allow different content types
+ * to have different strings.
  */
 
 define('SUBMITTED_BY_NODE_TEXT', t('Submitted by [node:author] on [node:created]'));
 define('SUBMITTED_BY_COMMENT_NODE_TEXT', t('Submitted by [comment:author] on [comment:created]'));
 
 /**
- * Implements hook_form_FORM_ID_alter().
- *
- * Add the pattern field to the node edit form.
+ * Implements hook_node_type_load().
  */
-function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
-  $type = isset($form['#node_type']->type) ? $form['#node_type']->type : '';
-  $current_value = variable_get('submitted_by_' . $type, array());
-  if (isset($form['type'])) {
-    $form['display']['submitted_by'] = array(
-      '#type' => 'container',
-      '#states' => array(
-        'invisible' => array(
-          'input[name="node_submitted"]' => array('checked' => FALSE),
-        ),
-      ),
+function submitted_by_node_type_load(&$types) {
+  // Unfortunately we can't get a list of view modes here (without causing a
+  // recursion loop) so we just set a string value for the default node pattern
+  // and overwrite it later with an array of view mode patterns.
+  foreach ($types as $type_name => $type) {
+    $types[$type_name]->settings += array(
+      'submitted_by' => SUBMITTED_BY_NODE_TEXT,
+      'submitted_by_comment' => SUBMITTED_BY_COMMENT_NODE_TEXT,
     );
-    // Get info about view_modes.
-    $entity_info = entity_get_info('node');
-
-    $form['display']['submitted_by']['view_modes'] = array(
-      '#type' => 'value',
-      '#value' => $entity_info['view modes'],
-    );
-    foreach ($entity_info['view modes'] as $mode => $info) {
-      // Note: node module will add "_type" to the variable name.
-      $form['display']['submitted_by']["submitted_by_$mode"] = array(
-        '#type' => 'textfield',
-        '#maxlength' => 255,
-        '#title' => t("Byline text - @mode view mode", array('@mode' => $info['label'])),
-        '#default_value' => !empty($current_value[$mode]) ? $current_value[$mode] : SUBMITTED_BY_NODE_TEXT,
-        '#description' => t('When a node is displayed in the "@mode" view mode, the text in this box
-          will be used to override the normal byline attribution and date-posted text.
-          Default is "@default"', array(
-            '@mode' => $info['label'],
-            '@default' => SUBMITTED_BY_NODE_TEXT)),
-        '#element_validate' => array('token_element_validate'),
-        '#token_types' => array('node'),
-      );
-    }
-
-    $form['display']['submitted_by']['token_help'] = array(
-      '#theme' => 'token_tree',
-      '#token_types' => array('node'),
-    );
-
-    if (isset($form['comment'])) {
-      $form['comment']['submitted_by'] = array(
-        '#type' => 'container',
-      );
-      $form['comment']['submitted_by']['submitted_by_comment'] = array(
-        '#type' => 'textfield',
-        '#maxlength' => 255,
-        '#title' => t("Byline text"),
-        '#default_value' => variable_get('submitted_by_comment_node_' . $type, SUBMITTED_BY_COMMENT_NODE_TEXT),
-        '#description' => t('When a comment is displayed, text in this box will be used to override the normal byline attribution and date-posted text. Default is "@default"', array('@default' => SUBMITTED_BY_COMMENT_NODE_TEXT)),
-        '#element_validate' => array('token_element_validate'),
-        '#token_types' => array('comment'),
-      );
-      $form['comment']['submitted_by']['token_help'] = array(
-        '#theme' => 'token_tree',
-        '#token_types' => array('comment'),
-      );
-    }
-
-    // Provide a submit handler to clean up our variables.
-    if (isset($form['#submit'])) {
-      array_unshift($form['#submit'], 'submitted_by_node_form_submit');
-    }
-    else {
-      $form['#submit'] = array('submitted_by_node_form_submit');
-    }
   }
 }
 
 /**
- * Submission handler to aggregate the patterns into an array.
+ * Implements hook_form_FORM_ID_alter() for node_type_form.
+ *
+ * Add the pattern field to the node edit form.
+ */
+function submitted_by_form_node_type_form_alter(&$form, &$form_state) {
+  $node_type = $form['#node_type'];
+  $entity_info = entity_get_info('node');
+
+  $form['display']['submitted_by'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      'invisible' => array(
+        'input[name="node_submitted"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+  foreach ($entity_info['view modes'] as $mode => $info) {
+    $form['display']['submitted_by']["submitted_by_$mode"] = array(
+      '#type' => 'textfield',
+      '#maxlength' => 255,
+      '#title' => t("Byline text - @mode view mode", array('@mode' => $info['label'])),
+      '#default_value' => is_array($node_type->settings['submitted_by']) ? $node_type->settings['submitted_by'][$mode] : $node_type->settings['submitted_by'],
+      '#description' => t('When a node is displayed in the "@mode" view mode, the text in this box will be used to override the normal byline attribution and date-posted text.', array('@mode' => $info['label'])),
+      '#element_validate' => array('token_element_validate'),
+      '#token_types' => array('node'),
+    );
+  }
+  $form['display']['submitted_by']['token_help'] = array(
+    '#theme' => 'token_tree',
+    '#token_types' => array('node'),
+  );
+
+  if (isset($form['comment'])) {
+    $form['comment']['submitted_by'] = array(
+      '#type' => 'container',
+    );
+    $form['comment']['submitted_by']['submitted_by_comment'] = array(
+      '#type' => 'textfield',
+      '#maxlength' => 255,
+      '#title' => t("Byline text"),
+      '#default_value' => $node_type->settings['submitted_by_comment'],
+      '#description' => t('When a comment is displayed, text in this box will be used to override the normal byline attribution and date-posted text.'),
+      '#element_validate' => array('token_element_validate'),
+      '#token_types' => array('comment'),
+    );
+    $form['comment']['submitted_by']['token_help'] = array(
+      '#theme' => 'token_tree',
+      '#token_types' => array('comment'),
+    );
+  }
+
+  // Provide a custom submit handler.
+  $form['#submit'][] = 'submitted_by_node_form_submit';
+}
+
+/**
+ * Custom submission handler to aggregate the patterns into an array.
  */
 function submitted_by_node_form_submit($form, &$form_state) {
   $strings = array();
-  // Get all the values.
-  foreach ($form_state['values']['view_modes'] as $mode => $info) {
-    $var = "submitted_by_$mode";
-    $strings[$mode] = $form_state['values'][$var];
-    unset($form_state['values'][$var]);
+  $entity_info = entity_get_info('node');
+
+  // Get view mode patterns.
+  foreach ($entity_info['view modes'] as $mode => $info) {
+    $strings[$mode] = $form_state['values']["submitted_by_$mode"];
   }
+
   // Save the settings.
-  variable_set('submitted_by_' . $form_state['values']['type'], $strings);
-  // Save the settings for comment.
-  variable_set('submitted_by_comment_node_' . $form_state['values']['type'], $form_state['values']['submitted_by_comment']);
+  $node_type = node_type_load($form_state['values']['type']);
+  $node_type->settings = array_merge($node_type->settings, array('submitted_by' => $strings));
+  node_type_save($node_type);
 }
 
 /**
@@ -110,27 +105,22 @@ function submitted_by_node_form_submit($form, &$form_state) {
  */
 function submitted_by_field_extra_fields() {
   $extra = array();
-  $field  = array(
+
+  $field = array(
     'display' => array(
       'submitted_by' => array(
         'label' => t('Submitted by'),
         'description' => t('Submitted By information.'),
         'weight' => 0,
-        'visible' => FALSE,
       ),
     ),
   );
 
-  // If the Comment module is enabled, we'll do those too.
-  $comments = module_exists('comment');
-
   foreach (node_type_get_types() as $type) {
-    $submitted_by = variable_get('submitted_by_' . $type->type, NULL);
-    if ($submitted_by) {
+    if (is_array($type->settings['submitted_by'])) {
       $extra['node'][$type->type] = $field;
     }
-    $submitted_by = variable_get('submitted_by_comment_node_' . $type->type, NULL);
-    if ($comments && $submitted_by) {
+    if (module_exists('comment') && $type->settings['submitted_by_comment']) {
       $extra['comment']['comment_node_' . $type->type] = $field;
     }
   }
@@ -143,10 +133,13 @@ function submitted_by_field_extra_fields() {
  */
 function submitted_by_do_replace($entity, $view_mode = '', $entity_type = 'node') {
   $output = NULL;
+  $config = config("node.type.$entity->type");
+
   // Note that we do suppress un-replaced tokens.
   $options = array('clear' => TRUE);
+
   if ($entity_type == 'node') {
-    $submitted_by = variable_get('submitted_by_' . $entity->type, array());
+    $submitted_by = $config->get('settings.submitted_by');
     if ($submitted_by && !empty($submitted_by[$view_mode])) {
       // Translate the string, then get node tokens.
       // Note that we do not suppress un-replaced tokens.
@@ -154,11 +147,12 @@ function submitted_by_do_replace($entity, $view_mode = '', $entity_type = 'node'
     }
   }
   else {
-    $submitted_by = variable_get('submitted_by_' . $entity->node_type, array());
-    if ($submitted_by && !empty($submitted_by)) {
+    $submitted_by = $config->get('settings.submitted_by_comment');
+    if (!empty($submitted_by)) {
       $output = token_replace($submitted_by, array('comment' => $entity), $options);
     }
   }
+
   return $output;
 }
 
@@ -167,11 +161,11 @@ function submitted_by_do_replace($entity, $view_mode = '', $entity_type = 'node'
  */
 function submitted_by_node_view($node, $view_mode, $langcode) {
   $fields = field_extra_fields_get_display('node', $node->type, $view_mode);
+
   if (isset($fields['submitted_by']['visible']) && $fields['submitted_by']['visible']) {
     $node->content['submitted_by'] = array(
-      '#markup' => '<span class="submitted-by">'
-      . submitted_by_do_replace($node, $view_mode)
-      . '</span>');
+      '#markup' => '<span class="submitted-by">' . submitted_by_do_replace($node, $view_mode) . '</span>',
+    );
   }
   else {
     $node->content['submitted_by'] = array(array());
@@ -183,11 +177,11 @@ function submitted_by_node_view($node, $view_mode, $langcode) {
  */
 function submitted_by_comment_view($comment, $view_mode, $langcode) {
   $fields = field_extra_fields_get_display('comment', $comment->node_type, $view_mode);
+
   if (isset($fields['submitted_by']['visible']) && $fields['submitted_by']['visible']) {
     $comment->content['submitted_by'] = array(
-      '#markup' => '<span class="submitted-by">'
-      . submitted_by_do_replace($comment, '', 'comment')
-      . '</span>');
+      '#markup' => '<span class="submitted-by">' . submitted_by_do_replace($comment, '', 'comment') . '</span>',
+    );
   }
   else {
     $comment->content['submitted_by'] = array(array());
@@ -206,8 +200,9 @@ function submitted_by_process_node(&$variables) {
   $view_mode = $variables['view_mode'];
 
   // Make submitted info empty, if user is showing module's submitted
-  // informaiton.
+  // information.
   $fields = field_extra_fields_get_display('node', $node->type, $view_mode);
+
   if (isset($fields['submitted_by']['visible']) && $fields['submitted_by']['visible']) {
     $variables['display_submitted'] = FALSE;
     $variables['submitted'] = '';
@@ -228,8 +223,9 @@ function submitted_by_process_comment(&$variables) {
   $view_mode = $variables['elements']['#view_mode'];
 
   // Make submitted info empty, if user is showing module's submitted
-  // informaiton.
+  // information.
   $fields = field_extra_fields_get_display('comment', $comment->node_type, $view_mode);
+
   if (isset($fields['submitted_by']['visible']) && $fields['submitted_by']['visible']) {
     $variables['display_submitted'] = FALSE;
     $variables['submitted'] = '';
@@ -239,12 +235,3 @@ function submitted_by_process_comment(&$variables) {
   }
 }
 
-/**
- * Implements hook_node_type_delete().
- *
- * Delete submitted_by variable when content type is deleted.
- */
-function submitted_by_node_type_delete($info) {
-  variable_del('submitted_by_' . $info->type);
-  variable_del('submitted_by_comment_node_' . $info->type);
-}

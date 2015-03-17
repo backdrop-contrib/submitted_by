@@ -1,5 +1,5 @@
 name = Submitted By
-description = Customize the Submitted by text on a per-node-type basis.
+description = Customize the Submitted By text on a per-node-type basis.
+backdrop = 1.x
 dependencies[] = token
-dependencies[] = field
-core = 7.x
+
