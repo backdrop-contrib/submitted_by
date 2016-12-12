@@ -5,10 +5,6 @@ Submitted By enables you to control the format of your content's "Submitted by"
 information per content type. It adds fields to your node edit form that let you
 enter tokenized patterns for the text you want to display.
 
-Depends on [Token](https://github.com/backdrop-contrib/token) module.
-Note: This module does not create any data; rather it relies on other modules
-providing that data through Token.
-
 Installation
 ------------
 
@@ -19,16 +15,21 @@ Installation
   at Administration > Structure > Content Types > [content_type]
   (admin/structure/types/manage/[content_type]).
 
+Translation
+-----------
+
+Because Submitted By dynamically builds string, the only way we know to translate them is to use the "String Overrides" in settings.php per language.
+
 License
 -------
 
 This project is GPL v2 software. See the LICENSE.txt file in this directory for
 complete text.
 
-Current Maintainers
+Maintainers
 -------------------
 
-- Peter Anderson (https://github.com/BWPanda)
+Looking for a maintainer
 
 Credits
 -------

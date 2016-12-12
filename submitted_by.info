@@ -1,3 +1,4 @@
 name = Submitted By
 description = Customize the Submitted By text on a per-node-type basis.
 backdrop = 1.x
+type = module
