@@ -190,12 +190,15 @@ function submitted_by_comment_view($comment, $view_mode, $langcode) {
 
 
 /**
- * Implements hook_process_node().
+ * Implements hook_preprocess_node().
  *
- * Use hook_process_node() rather than hook_preprocess_node() as themes might
- * override the submitted variable unconditionally.
+ * The Drupal 7 module uses hook_process_node() rather
+ * than hook_preprocess_node() as themes might
+ * override the submitted variable unconditionally; however,
+ * hook_process_node() does not exist in Backdrop, so we use
+ * hook_preprocess_node() instead.
  */
-function submitted_by_process_node(&$variables) {
+function submitted_by_preprocess_node(&$variables) {
   $node = $variables['elements']['#node'];
   $view_mode = $variables['view_mode'];
 
@@ -234,4 +237,3 @@ function submitted_by_process_comment(&$variables) {
     $variables['submitted'] = submitted_by_do_replace($comment, '', 'comment');
   }
 }
-
