@@ -136,10 +136,12 @@ function submitted_by_field_extra_fields() {
  */
 function submitted_by_do_replace($entity, $view_mode = '', $entity_type = 'node') {
   $output = NULL;
-  $bundle= $entity->type;
   // If it's a comment we need to dig for the bundle
   if (isset($entity->node_type)) {
     $bundle = str_replace('comment_node_', '', $entity->node_type);
+  }
+  else {
+    $bundle = $entity->type;
   }
   $config = config("node.type.$bundle");
   // Note that we do suppress un-replaced tokens.
