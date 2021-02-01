@@ -1,7 +1,7 @@
 Note: the functionality of this module has been _partly_ merged into Backdrop
 core since version 1.16.0. This module, in addition to the core functionality:
-- Allows you to customise the submitted by line _per display mode_
-- Allows the submitted by pseudo-field to be ordered in each display mode
+- Allows you to customise the "submitted by" line _per display mode_
+- Allows the "submitted by" pseudo-field to be ordered in each display mode
 
 Submitted By
 ============
