@@ -95,9 +95,12 @@ function submitted_by_node_form_submit($form, &$form_state) {
   }
 
   // Save the settings.
-  $node_type = node_type_load($form_state['values']['type']);
-  $node_type->settings = array_merge($node_type->settings, array('submitted_by' => $strings));
-  node_type_save($node_type);
+  $config = config('node.type.' . $form_state['values']['type']);
+  $config->set('settings.submitted_by', $strings);
+  if (isset($form_state['values']['submitted_by_comment'])) {
+    $config->set('settings.submitted_by_comment', $form_state['values']['submitted_by_comment']);
+  }
+  $config->save();
 }
 
 /**
